@@ -14,7 +14,7 @@ export default function AdminLayout({
         <NavLink href='/admin/users'>Customers</NavLink>
         <NavLink href='/admin/orders'>Sales</NavLink>
       </Nav>
-      {/* Children are the components from  */}
+      {/* Children are the components from page.tsx  */}
       <div className='container m-6'>{children}</div>
     </>
   );
