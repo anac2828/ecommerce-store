@@ -23,11 +23,13 @@ const addSchema = z.object({
   image: imageSchema,
 });
 
-// prevState is required for using the error handling in the form
+// prevState is required for using the error handling in the form prevState: unknown
 export async function addProduct(prevState: unknown, formData: FormData) {
   const result = addSchema.safeParse(Object.fromEntries(formData.entries()));
+  console.log('result', result);
   if (result.success === false) {
-    return result.error.issues;
+    return  z.flattenError(result.error).fieldErrors;
+    // return result.error.issues
   }
   const data = result.data;
 
@@ -46,6 +48,7 @@ export async function addProduct(prevState: unknown, formData: FormData) {
 
   await db.product.create({
     data: {
+      isAvailableForPurchase: false,
       name: data.name,
       description: data.description,
       priceInCents: data.priceInCents,
