@@ -1,20 +1,27 @@
 'use client';
 
+import { useActionState, useState } from 'react';
+
+import { formatCurrency } from '@/lib/formaters';
+import { addProduct } from '@/app/admin/_actions/products';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCurrency } from '@/lib/formaters';
-import { useState } from 'react';
+import { useFormStatus } from 'react-dom';
 
 export function ProductForm() {
+  // Error handling
+  const [error, action] = useActionState(addProduct, []);
+  console.log('error', error);
   // use <number> instead of 0 to allow empty input field
-  const [priceInCents, setPriceInCents] = useState<number>();
+  const [priceInCents, setPriceInCents] = useState<number>(0);
   return (
-    <form className='space-y-7'>
+    <form action={action} className='space-y-7'>
       <div className='space-y-2'>
         <Label htmlFor='name'>Name</Label>
         <Input id='name' name='name' type='text' required />
+        {/* {error.name && <div className='text-destructive'>{error.name}</div>} */}
       </div>
       <div className='space-y-2'>
         <Label htmlFor='priceInCents'>Price in cents</Label>
@@ -24,7 +31,7 @@ export function ProductForm() {
           type='number'
           required
           value={priceInCents}
-          onChange={(e) => setPriceInCents(Number(e.target.value) || undefined)}
+          onChange={(e) => setPriceInCents(Number(e.target.value))}
         />
       </div>
       <div className='text-muted-foreground'>
@@ -42,7 +49,16 @@ export function ProductForm() {
         <Label htmlFor='image'>Image</Label>
         <Input id='image' name='image' type='file' required />
       </div>
-      <Button type='submit'>Save</Button>
+      <SubmitButton />
     </form>
+  );
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type='submit' disabled={pending}>
+      {pending ? 'Saving...' : 'Save'}
+    </Button>
   );
 }
