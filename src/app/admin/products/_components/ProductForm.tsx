@@ -3,27 +3,32 @@
 import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { formatCurrency } from '@/lib/formaters';
-import { addProduct } from '@/app/admin/_actions/products';
+import { addProduct, updateProduct } from '@/app/admin/_actions/products';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Product } from '@/generated/prisma';
+import Image from 'next/image';
 
 
-export function ProductForm() {
+export function ProductForm({ product }: { product: Product | null }) {
   // Error handling
-  const [error, action] = useActionState(addProduct, {});
+  const [error, action] = useActionState(product == null ? addProduct : updateProduct.bind(null, product.id), {});
   // use <number> instead of 0 to allow empty input field
-  const [priceInCents, setPriceInCents] = useState<number>();
-  
+  const [priceInCents, setPriceInCents] = useState<number | undefined>(product?.priceInCents);
+
   return (
     <form action={action} className='space-y-7'>
-      {/* Name */}
+
+      {/* NAME */}
       <div className='space-y-2'>
         <Label htmlFor='name'>Name</Label>
-        <Input id='name' name='name' type='text' required />
+        <Input id='name' name='name' type='text' required defaultValue={product?.name} />
         {error?.name && <div className='text-destructive'>{error.name}</div>}
       </div>
+
+      {/* PRICE */}
       <div className='space-y-2'>
         <Label htmlFor='priceInCents'>Price in cents</Label>
         <Input
@@ -32,27 +37,35 @@ export function ProductForm() {
           type='number'
           required
           value={priceInCents}
-          onChange={(e) => setPriceInCents(Number(e.target.value))}
+          onChange={(e) => setPriceInCents(Number(e.target.value) || undefined)}
         />
       </div>
       <div className='text-muted-foreground'>
         {formatCurrency((priceInCents || 0) / 100)}
       </div>
-        {error?.priceInCents && <div className='text-destructive'>{error.priceInCents}</div>}
-    
+      {error?.priceInCents && <div className='text-destructive'>{error.priceInCents}</div>}
+
+      {/* DESCRIPTION */}
       <div className='space-y-2'>
         <Label htmlFor='description'>Description</Label>
-        <Textarea id='description' name='description' required />
+        <Textarea id='description' name='description' required defaultValue={product?.description} />
         {error?.description && <div className='text-destructive'>{error.description}</div>}
       </div>
+
+      {/* FILE */}
       <div className='space-y-2'>
         <Label htmlFor='file'>File</Label>
-        <Input id='file' name='file' type='file' required />
+        {/* A file is required only if product is null */}
+        <Input id='file' name='file' type='file' required={product == null} />
+        {product != null && <div>{product.filePath}</div>}
         {error?.file && <div className='text-destructive'>{error.file}</div>}
       </div>
+
+      {/* IMAGE */}
       <div className='space-y-2'>
         <Label htmlFor='image'>Image</Label>
-        <Input id='image' name='image' type='file' required />
+        <Input id='image' name='image' type='file' />
+        {product != null && <Image src={`${product.imagePath}`} width="400" height="400" alt='Product image' />}
         {error?.image && <div className='text-destructive'>{error.image}</div>}
       </div>
       <SubmitButton />

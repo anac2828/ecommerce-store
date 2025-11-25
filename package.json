@@ -21,7 +21,7 @@
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1",
     "ts-node": "^10.9.2",
-    "zod": "^4.1.12"
+    "zod": "3.22"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

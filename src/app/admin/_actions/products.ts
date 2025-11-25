@@ -1,37 +1,53 @@
 'use server';
 
 import crypto from 'crypto';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import db from '@/db/db';
 
 // FORM VALIDATION SCHEMA
-const fileSchema = z.instanceof(File).refine((file) => file.size > 0, {
-  message: 'File is required',
-});
+const fileSchema = z.instanceof(File, { message: 'Required' });
+// const fileSchema = z.instanceof(File).refine((file) => file.size > 0, {
+//   message: 'File is required',
+// });
 
 const imageSchema = fileSchema.refine(
   (file) => file.size === 0 || file.type.startsWith('image/')
 );
+// const imageSchema = fileSchema.refine(
+//   (file) => file.size === 0 || file.type.startsWith('image/')
+// );
 
 const addSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
   priceInCents: z.coerce.number().int().min(1), //To keep from items being free.
-  file: fileSchema,
-  image: imageSchema,
+  file: fileSchema.refine(file => file.size > 0, "Required"),
+  image: imageSchema.refine(file => file.size > 0, "Required"),
 });
+// const addSchema = z.object({
+//   name: z.string().min(1),
+//   description: z.string().min(1),
+//   priceInCents: z.coerce.number().int().min(1), //To keep from items being free.
+//   file: fileSchema,
+//   image: imageSchema,
+// });
 
+// ADD PRODUCT
 // prevState is required for using the error handling in the form prevState: unknown
 export async function addProduct(prevState: unknown, formData: FormData) {
   const result = addSchema.safeParse(Object.fromEntries(formData.entries()));
-  console.log('result', result);
+
+  // error handler
   if (result.success === false) {
-    return  z.flattenError(result.error).fieldErrors;
-    // return result.error.issues
+    // ZOD V4
+    // return z.flattenError(result.error).fieldErrors;
+    return result.error.formErrors.fieldErrors;
   }
+
   const data = result.data;
+  // From the form submition
 
   // Saves to the public folder for simplicity
   // In a real app, you'd upload the files to a storage service here
@@ -41,9 +57,7 @@ export async function addProduct(prevState: unknown, formData: FormData) {
 
   await fs.mkdir('public/products', { recursive: true });
   const imagePath = `/products/${crypto.randomUUID()}-${data.image.name}`;
-  await fs.writeFile(
-    `public${imagePath}`,
-    Buffer.from(await data.image.arrayBuffer())
+  await fs.writeFile(`public${imagePath}`, Buffer.from(await data.image.arrayBuffer())
   );
 
   await db.product.create({
@@ -59,4 +73,97 @@ export async function addProduct(prevState: unknown, formData: FormData) {
   });
 
   redirect('/admin/products');
+}
+
+const editSchema = addSchema.extend({
+  file: fileSchema.optional(),
+  image: imageSchema.optional(),
+})
+
+// EDIT PRODUCT
+export async function updateProduct(id: string, prevState: unknown, formData: FormData) {
+
+
+  const result = editSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (result.success === false) {
+
+    // ZOD v4
+    // return z.flattenError(result.error).fieldErrors;
+    return result.error.formErrors.fieldErrors;
+  }
+  // From form submition
+
+  const data = result.data;
+
+  const product = await db.product.findUnique({ where: { id } })
+
+  if (product == null) return notFound();
+
+
+  // current file saved to db
+  let filePath = product.filePath
+
+  // If there was a file uploaded
+  if (data.file != null && data.file.size > 0) {
+    // delete file
+    await fs.unlink(filePath);
+    // New file path
+    filePath = `products/${crypto.randomUUID()}-${data.file.name}`;
+    // Save file
+    await fs.writeFile(filePath, Buffer.from(await data.file.arrayBuffer()));
+  }
+
+  // Current file saved to db
+  let imagePath = product.imagePath
+
+  if (data.image != null && data.image.size > 0) {
+    // Delete file
+    await fs.unlink(`public${imagePath}`);
+    // New image
+    imagePath = `/products/${crypto.randomUUID()}-${data.image.name}`;
+    // Save new image
+    await fs.writeFile(`public${imagePath}`,
+      Buffer.from(await data.image.arrayBuffer()));
+  }
+
+  await db.product.update({
+    where: { id },
+    data: {
+      name: data.name,
+      description: data.description,
+      priceInCents: data.priceInCents,
+      // In a real app, you'd upload the files to a storage service here
+      filePath,
+      imagePath,
+    },
+  });
+
+  redirect('/admin/products');
+}
+
+// TOGGLE AVAILABILITY
+
+// Toggle product availability action from true to false or viseversa
+// Used in the product table dropdown menu
+export async function toggleProuctAvailability(
+  id: string,
+  isAvailableForPurchase: boolean
+) {
+  await db.product.update({
+    where: { id },
+    data: { isAvailableForPurchase },
+  });
+}
+
+// Prisma DELETE action
+export async function deleteProduct(id: string) {
+
+  const product = await db.product.delete({ where: { id } })
+
+  if (product == null) return notFound()
+
+  // Deletes files upon product deletion
+  await fs.unlink(product.filePath);
+  await fs.unlink(`public${product.imagePath}`)
 }

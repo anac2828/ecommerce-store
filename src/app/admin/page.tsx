@@ -45,6 +45,7 @@ async function getProductData() {
   return { activeCount, inactiveCount };
 }
 
+// Admin dashboard component displaying sales, customers, and products data
 export default async function AdminDashboard() {
   const [salesData, userData, productData] = await Promise.all([
     getSalesData(),

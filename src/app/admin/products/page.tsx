@@ -1,14 +1,15 @@
 import Link from 'next/link';
 import { CheckCircle2, MoreVertical, XCircle } from 'lucide-react';
 import db from '@/db/db';
-import { formatCurrency, formatNumber } from '@/lib/formaters';
+import { formatNumber } from '@/lib/formaters';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '../_components/PageHeader';
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
-import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { ActiveToggleDropdownItem, DeleteDropdownMenu } from './_components/ProductActions';
 
-// List of products for the admin dashboard
+// List of products for the admin/products page
 export default function AdminProductPage() {
   return (
     <>
@@ -34,12 +35,12 @@ async function ProductsTable() {
       // Number of orders for the product
       _count: {
         select: { orders: true }
-      } 
+      }
     }
   })
 
-  if(products.length === 0) return <p>No products found.</p>
-  
+  if (products.length === 0) return <p>No products found.</p>
+
   return (
     <Table>
       {/* HEADER */}
@@ -57,18 +58,18 @@ async function ProductsTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {products.map(product => 
+        {products.map(product =>
           <TableRow key={product.id}>
             <TableCell>
               {product.isAvailableForPurchase ?
-              <>
-              <span className='sr-only'>Available</span>
-              <CheckCircle2/>
-              </> :
-              <>
-              <span className='sr-only'>Unavailable</span>
-              <XCircle/>
-              </>}
+                <>
+                  <span className='sr-only'>Available</span>
+                  <CheckCircle2 />
+                </> :
+                <>
+                  <span className='sr-only'>Unavailable</span>
+                  <XCircle className='stroke-destructive' />
+                </>}
             </TableCell>
             <TableCell>{product.name}</TableCell>
             <TableCell>${product.priceInCents / 100}</TableCell>
@@ -77,21 +78,29 @@ async function ProductsTable() {
               <DropdownMenu>
                 {/* Button */}
                 <DropdownMenuTrigger>
-                    <MoreVertical />
-                    <span className='sr-only'>Actions</span>
-                  </DropdownMenuTrigger>
-                  {/* Content */}
-                  <DropdownMenuContent>
-                    <DropdownMenuItem asChild>
-                      <a href={`/admin/products/${product.id}/download`}>Download</a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  <MoreVertical />
+                  <span className='sr-only'>Actions</span>
+                </DropdownMenuTrigger>
+
+                {/* Content */}
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <a href={`/admin/products/${product.id}/download`}>Download</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {/* Actions */}
+                  <ActiveToggleDropdownItem id={product.id} isAvailableForPurchase={product.isAvailableForPurchase} />
+                  <DropdownMenuSeparator />
+
+                  <DeleteDropdownMenu id={product.id} disabled={product._count.orders > 0} />
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
-            </TableRow>
+          </TableRow>
         )}
       </TableBody>
     </Table>
