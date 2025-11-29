@@ -1,0 +1,29 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { isValidAuth } from "./lib/isValidAuth";
+
+export async function middleware(req: NextRequest) {
+    if (await isAuthenticated(req) === false) {
+        return new NextResponse("Unauthorized",
+            {
+                status: 401,
+                headers: { "WWW-Authenticate": "Basic" }
+            })
+    }
+}
+
+async function isAuthenticated(req: NextRequest) {
+    const authHeader = req.headers.get("authorization") || req.headers.get('Authorization')
+
+    if (authHeader == null) return false
+
+    // username, password from login screen
+    const [username, password] = Buffer.from(authHeader.split(" ")[1], "base64").toString().split(':')
+
+    return isValidAuth(username, password)
+}
+
+// Any path that starts with admin
+export const config = {
+    matcher: '/admin/:path*'
+}
