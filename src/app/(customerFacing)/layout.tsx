@@ -7,7 +7,7 @@ export default function Layout({
     <>
       <Nav>
         <NavLink href='/'>Home</NavLink>
-        <NavLink href='/products'>Product</NavLink>
+        <NavLink href='/products'>Products</NavLink>
         <NavLink href='/orders'>My Orders</NavLink>
       </Nav>
       <div className='container px-6 my-6'>{children}</div>

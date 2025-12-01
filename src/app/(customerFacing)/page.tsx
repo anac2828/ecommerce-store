@@ -5,23 +5,28 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
 import { Suspense } from 'react';
+import { cache } from '@/lib/cache';
 
-// GET PRODUCTS FROM PRISMA DB
-function getMostPopularProducts() {
-  return db.product.findMany({
-    where: { isAvailableForPurchase: true },
-    orderBy: { orders: { _count: 'desc' } }, //sort by products with the most orders
-    take: 6, //show only the first 6
-  });
-}
+// GET PRODUCTS FROM PRISMA DB - cache will get fetch data every 24 hours
+const getMostPopularProducts = cache(
+  () => {
+    return db.product.findMany({
+      where: { isAvailableForPurchase: true },
+      orderBy: { orders: { _count: 'desc' } }, //sort by products with the most orders
+      take: 6, //show only the first 6
+    });
+  },
+  ['/', 'getMostPopularProducts'],
+  { revalidated: 60 * 60 * 24 }
+);
 
-function getNewestProducts() {
+const getNewestProducts = cache(() => {
   return db.product.findMany({
     where: { isAvailableForPurchase: true },
     orderBy: { createdAt: 'desc' }, //sort by products with the most orders
     take: 6, //show only the first 6
   });
-}
+}, ['/', 'gerNewestProducts']);
 
 // MAIN COMPONENT Displays on the layout.tsx
 export default function HomePage() {

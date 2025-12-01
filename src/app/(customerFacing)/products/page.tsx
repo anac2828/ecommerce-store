@@ -1,15 +1,18 @@
 import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
 import db from '@/db/db';
+import { cache } from '@/lib/cache';
 import { Suspense } from 'react';
 
 // GET PRODUCTS FROM Prisma
-
-async function getProducts() {
-  return await db.product.findMany({ where: { isAvailableForPurchase: true } });
-}
+const getProducts = cache(async () => {
+  return await db.product.findMany({
+    where: { isAvailableForPurchase: true },
+    orderBy: { name: 'asc' },
+  });
+}, ['/', 'getProducts']);
 
 // MAIN COMPONENT
-export function ProductsPage() {
+export default function ProductsPage() {
   return (
     <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
       <Suspense
