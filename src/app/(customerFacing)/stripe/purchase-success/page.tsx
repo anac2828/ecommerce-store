@@ -8,15 +8,15 @@ import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
 
+// * MAIN COMPONENT *****
 export default async function SuccessPage({
   searchParams,
 }: {
   searchParams: { payment_intent: string }
 }) {
-  // * RETRIEVE PAYMETN INTENT
-  const paymentIntent = await stripe.paymentIntents.retrieve(
-    searchParams.payment_intent
-  )
+  const { payment_intent: paymentIntentId } = await searchParams
+  // * RETRIEVE PAYMENT INTENT
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
 
   if (paymentIntent.metadata.productId == null) return notFound()
 
@@ -53,9 +53,16 @@ export default async function SuccessPage({
           <div className='line-clamp-3 text-muted-forground'>
             {product.description}
           </div>
-          <Button>
+          <Button className='mt-4' size='lg' asChild>
             {isSuccess ? (
-              <a></a>
+              // Route to download file
+              <a
+                href={`/products/download/${await createDownloadVerificationId(
+                  product.id
+                )}`}
+              >
+                Download
+              </a>
             ) : (
               <Link href={`/products/${product.id}/purchase`}>Try Again</Link>
             )}
@@ -64,4 +71,16 @@ export default async function SuccessPage({
       </div>
     </div>
   )
+}
+
+// Creates a verification id the database and returns it for use in the button link. Verification ID expires in 24 hours.
+async function createDownloadVerificationId(productId: string) {
+  return (
+    await db.downloadVerification.create({
+      data: {
+        productID: productId,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      },
+    })
+  ).id
 }
