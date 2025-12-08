@@ -1,4 +1,4 @@
-import { fontFamily } from 'tailwindcss/defaultTheme';
+// import { fontFamily } from 'tailwindcss/defaultTheme';
 
 module.exports = {
   purge: [],
@@ -10,4 +10,4 @@ module.exports = {
     extend: {},
   },
   plugins: [],
-};
+}
