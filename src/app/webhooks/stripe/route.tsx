@@ -11,7 +11,7 @@ const resend = new Resend(process.env.RESEND_API_KEY as string)
 export async function POST(req: NextRequest) {
   // Verify the webhook signature and construct the event
   const event = await stripe.webhooks.constructEvent(
-    await req.text(),
+    await req.text(), //raw body
     req.headers.get('stripe-signature') as string,
     webhookSecret
   )
@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
     const { email } = charge.billing_details
     const priceInCents = charge.amount
 
-    console.log('CHARGE *****', charge)
     //   Find product purchased in the database
     const product = await db.product.findUnique({
       where: { id: productId },
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const userFields = {
       email,
-      orders: { create: { productId, priceInCents } },
+      orders: { create: { productId, pricePaidInCents: priceInCents } },
     }
 
     const {
@@ -52,7 +51,7 @@ export async function POST(req: NextRequest) {
     //Create a download verification to email to the customer
     const downloadVerification = await db.downloadVerification.create({
       data: {
-        productId,
+        productID: product.id,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // Link expires in 24 hours
       },
     })
