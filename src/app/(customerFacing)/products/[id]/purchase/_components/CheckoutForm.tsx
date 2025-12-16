@@ -90,7 +90,6 @@ function Form({
 
     // Check is item has been purchased by user
     const orderExists = await userOrderExists(email, productId)
-    console.log(orderExists)
 
     if (orderExists) {
       setErrorMessage(

@@ -2,6 +2,7 @@ import Stripe from 'stripe'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import db from '@/db/db'
+import PurchaseReceiptEmail from '@/email/PurchaseReceipt'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string
@@ -32,8 +33,7 @@ export async function POST(req: NextRequest) {
     if (product == null || email == null)
       return new NextResponse('Bad request', { status: 400 })
 
-    // Create or update the customer record in the database
-
+    //**  Create or update the customer record in the database
     const userFields = {
       email,
       orders: { create: { productId, pricePaidInCents: priceInCents } },
@@ -61,7 +61,13 @@ export async function POST(req: NextRequest) {
       from: `Support <${process.env.SENDER_EMAIL}>`,
       to: email,
       subject: `Your download link for ${product.name}`,
-      react: <h1>Hi</h1>,
+      react: (
+        <PurchaseReceiptEmail
+          order={order}
+          product={product}
+          downloadVerificationId={downloadVerification.id}
+        />
+      ),
     })
   } //End of -- if charge.succeeded
 

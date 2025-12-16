@@ -13,6 +13,7 @@ type PurchaseReceiptEmailProps = {
   product: {
     name: string
     imagePath: string
+    description: string
   }
   order: { id: string; createdAt: Date; pricePaidInCents: number }
   downloadVerificationId: string
@@ -22,6 +23,7 @@ PurchaseReceiptEmail.PreviewProps = {
   product: {
     name: 'Sample Product',
     imagePath: 'http://localhost:3001/static/shoes.jpg',
+    description: 'This is a sample product description.',
   },
   order: {
     id: crypto.randomUUID(),

@@ -18,7 +18,9 @@ export async function GET(
 
   // If no data is found or the link has expired redirect to expired page
   if (data == null) {
-    return NextResponse.redirect(new URL('/products/download/expired'))
+    return NextResponse.redirect(
+      new URL('/products/download/expired', `${req.url}`)
+    )
   }
 
   // TODO: Implement file download logic here using data.product.filePath

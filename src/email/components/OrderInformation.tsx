@@ -1,9 +1,16 @@
 import { formatCurrency, formatDate } from '@/lib/formaters'
-import { Column, Img, Row, Section, Text } from '@react-email/components'
+import {
+  Button,
+  Column,
+  Img,
+  Row,
+  Section,
+  Text,
+} from '@react-email/components'
 
 type OrderInformationProps = {
   order: { id: string; createdAt: Date; pricePaidInCents: number }
-  product: { imagePath: string; name: string }
+  product: { imagePath: string; name: string; description: string }
   downloadVerificationId: string
 }
 
@@ -43,6 +50,19 @@ export default function OrderInformation({
         <Row className='mt-8'>
           <Column className='align-bottom'>
             <Text className='m-0 mr-4 text-lg font-bold'>{product.name}</Text>
+          </Column>
+          <Column align='right'>
+            <Button
+              href={`http://localhost:3000/products/download/${downloadVerificationId}`}
+              className='px-6 py-4 text-lg text-white bg-black rounded'
+            >
+              Download
+            </Button>
+          </Column>
+        </Row>
+        <Row>
+          <Column>
+            <Text className='mb-0 text-gray-500'>{product.description}</Text>
           </Column>
         </Row>
       </Section>
